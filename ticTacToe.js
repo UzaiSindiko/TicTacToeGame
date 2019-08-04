@@ -19,12 +19,10 @@ let WC = [ [ 0, 1, 2 ], [ 3, 4, 5 ], [ 6, 7, 8 ], [ 0, 3, 6 ], [ 1, 4, 7 ], [ 2,
 let win = false;
 let giliran = 1;
 let move = 0;
-let giliranCom = 2;
 
 btn1.addEventListener('click', function() {
 	btn1.classList.add('btn');
 	btn2.classList.remove('btn');
-	giliranCom = 2;
 	giliran = 1;
 	reset();
 });
@@ -32,7 +30,6 @@ btn1.addEventListener('click', function() {
 btn2.addEventListener('click', function() {
 	btn2.classList.add('btn');
 	btn1.classList.remove('btn');
-	giliranCom = 1;
 	giliran = 1;
 	reset();
 	botMove();
@@ -57,8 +54,11 @@ function boardLogic() {
 					h1.textContent = `it is ✗ turn`;
 					giliran--;
 				}
+				console.log(giliran);
 				winner(board, giliran);
-				botMove();
+				if (win === false && move < 9) {
+					botMove();
+				}
 				winner(board, giliran);
 			}
 		});
@@ -113,34 +113,101 @@ function playAgain() {
 }
 
 function randomArr() {
-	if (move < 9 && win === false) {
-		let leng = board.length;
+	let random = Math.floor(Math.random() * 7 + 1);
 
-		let random = Math.floor(Math.random() * leng);
-
-		if (board[random].textContent !== ' ') {
-			return randomArr();
-		}
-		return random;
+	if (board[random].textContent !== ' ') {
+		return randomArr();
 	}
+	return random;
+}
+
+function almostWin(target) {
+	// WC stand for Winner Conditios
+	if (move > 1) {
+		let almotWinLoc = [];
+		for (let indexWC of WC) {
+			let temp = [];
+			for (let valueWC of indexWC) {
+				for (let j = 0; j < target.length; j++) {
+					// console.log(valueWC, target[j]);
+					if (valueWC === target[j]) {
+						temp.push(target[j]);
+					}
+				}
+				// console.log('ini dalah temp = ' + temp);
+				if (temp.length === 2) {
+					almotWinLoc.push(temp);
+					almotWinLoc.push(indexWC);
+					return almotWinLoc;
+				}
+			}
+		}
+	}
+
+	return false;
 }
 
 function botMove() {
-	if (move < 9 && win === false) {
-		let text = '';
-		let color = '';
+	let text = '';
+	let color = '';
+	let head = '';
+	giliran === 2 ? (text = '❍') : (text = '✗');
+	giliran === 2 ? (head = '✗') : (head = '❍');
+	giliran === 2 ? (color = '#f25050') : (color = '#7aabf5');
+	///
+	let humanLocation = [];
+	let emptyLovation = [];
+	let botLocation = [];
+	for (let i = 0; i < board.length; i++) {
+		if (board[i].textContent === text) {
+			botLocation.push(i);
+		}
+		else if (board[i].textContent === ' ') {
+			emptyLovation.push(i);
+		}
+		else {
+			humanLocation.push(i);
+		}
+	}
+	let humanAlmostWin = almostWin(humanLocation);
+
+	if (move < 9 && humanAlmostWin !== false) {
+		console.log(`ini adalah posisi human = `);
+		console.log(humanAlmostWin);
+		let result = 0;
+
+		for (let i = 0; i < humanAlmostWin[1].length; i++) {
+			let same = false;
+
+			for (let j = 0; j < humanAlmostWin[0].length; j++) {
+				if (humanAlmostWin[1][i] === humanAlmostWin[0][j]) {
+					same = true;
+				}
+			}
+			if (!same) {
+				result = humanAlmostWin[1][i];
+			}
+		}
+		if (board[result].textContent === ' ') {
+			board[result].textContent = text;
+			board[result].style.color = color;
+		}
+		else {
+			let random = randomArr();
+
+			h1.textContent = `it is ${head} turn`;
+			board[random].textContent = text;
+			board[random].style.color = color;
+		}
+	}
+	else {
 		let random = randomArr();
-		let head = '';
-		giliranCom === 2 ? (text = '❍') : (text = '✗');
-		giliranCom === 2 ? (head = '✗') : (head = '❍');
-		giliranCom === 2 ? (color = '#f25050') : (color = '#7aabf5');
 
 		h1.textContent = `it is ${head} turn`;
 		board[random].textContent = text;
 		board[random].style.color = color;
-
-		// mengganti giliran dan menghitung move
-		giliran === 2 ? (giliran = 1) : (giliran = 2);
-		move++;
 	}
+	// mengganti giliran dan menghitung move
+	giliran === 2 ? giliran-- : giliran++;
+	move++;
 }
